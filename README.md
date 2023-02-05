@@ -27,6 +27,14 @@ Like the system ELF loader, `elflepton` only relies on the value of the `e_machi
 
 **Currently, only `x86` and `x86-64` binaries are supported.**
 
+# Installation
+
+ELFLepton can be installed using pip:
+
+```
+pip install elflepton
+```
+
 # Usage
 
 Example use cases:
