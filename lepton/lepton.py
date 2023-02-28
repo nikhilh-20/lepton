@@ -5,6 +5,7 @@ from lepton.utils.exceptions import *
 from lepton.elfheader import ELFHeader
 from lepton.elfprogramheader import ELFProgramHeaderTable
 from lepton.elfsectionheader import ELFSectionHeaderTable
+from lepton.embeddedelf import *
 
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 LOG = logging.getLogger(__name__)
@@ -88,3 +89,15 @@ class ELFFile:
             new_data += self.data[len(new_data): len(new_data) + gap]
 
         return new_data
+
+    def get_embedded_elf(self):
+        """
+        This function dumps all ELF files embedded in the input file. These
+        extractions are not high fidelity because it's difficult to reliably
+        determine the size of an embedded ELF file. So, content exclusively in
+        the parent file may also be included in the extracted ELF files.
+        """
+        start_offsets = find_elf_magic_offsets(self.data)
+        start_offsets = apply_heuristics(self.data, self.elfheader.e_machine,
+                                         start_offsets)
+        return extract_embedded_elf(self.data, start_offsets)
