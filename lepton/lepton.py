@@ -1,6 +1,3 @@
-import os
-import logging
-
 from lepton.utils.exceptions import *
 from lepton.elfheader import ELFHeader
 from lepton.elfprogramheader import ELFProgramHeaderTable
@@ -41,7 +38,8 @@ class ELFFile:
         try:
             self.elfprogheader = ELFProgramHeaderTable(
                                      self.data,
-                                     self.elfheader.fields
+                                     self.elfheader.fields,
+                                     self.elfheader.little_endian
                                  )
         except ELFProgramHeaderTableError as err:
             LOG.error(f"Program header table error: {err}")
@@ -51,6 +49,7 @@ class ELFFile:
             self.elfsectionheader = ELFSectionHeaderTable(
                                         self.data,
                                         self.elfheader.fields,
+                                        self.elfheader.little_endian,
                                         new_header
                                     )
         except ELFSectionHeaderTableError as err:
@@ -67,7 +66,10 @@ class ELFFile:
 
         # Add any bytes between ELF header and program headers table
         e_phoff = self.elfheader.fields["e_phoff"]
-        gap = int.from_bytes(e_phoff, byteorder="little") - len(new_data)
+        if self.elfheader.little_endian:
+            gap = int.from_bytes(e_phoff, byteorder="little") - len(new_data)
+        else:
+            gap = int.from_bytes(e_phoff, byteorder="big") - len(new_data)
         if gap:
             new_data += self.data[len(new_data): len(new_data) + gap]
 

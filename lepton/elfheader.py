@@ -6,6 +6,7 @@ from struct import pack, unpack
 import lepton.utils.constants as constants
 import lepton.utils.exceptions as exceptions
 import lepton.utils.structures as structures
+import lepton.arch.mappings as arch_mappings
 
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 LOG = logging.getLogger(__name__)
@@ -21,19 +22,88 @@ class ELFHeader:
         :type new_header: bool
         """
         self.e_machine = None
-        self.arch_metadata = None
 
         if data[constants.MAGIC_SLICE[0]:constants.MAGIC_SLICE[1]] != constants.ELFMAGIC:
-            raise exceptions.ELFMagicError("ELFMagicError: Not an ELF: " +
+            raise exceptions.ELFMagicError("Not an ELF: " +
                                            hex(unpack("<I", data[constants.MAGIC_SLICE[0]:
                                                                  constants.MAGIC_SLICE[1]])[0]))
 
-        self.get_target_arch(data)
-
+        self.little_endian = self.is_little_endian(data)
+        self.endian = "<" if self.little_endian else ">"
+        self.bits32 = self.is_32_bit(data)
+        self.arch_metadata = self.get_target_arch(data).get_arch_field_values(little_endian=self.little_endian,
+                                                                              bits32=self.bits32)
         if new_header:
             self.fields = self.build_new_header(data)
         else:
             self.fields = self.build_raw_header(data)
+
+    @staticmethod
+    def is_little_endian(data):
+        """
+        This function determines the endianness of the sample based on heuristics.
+
+        1. I assume that ELF samples have e_version == 1. This assumption is
+        purely based on observation. While e_version can be == 0, I haven't
+        seen it being used. Note that a sample can still execute correctly
+        if e_version is set to 0, but this function will not work correctly.
+
+        2. I don't trust the value of EI_DATA in the ELF header.
+
+        :param data: Input file contents
+        :type data: <class 'bytes'>
+        :return: True if little endian, False if big endian
+        """
+        # Assumes the value of e_version is 1 in the sample.
+        expected_e_version = 1
+        ei_data = unpack("<B", data[constants.EI_DATA[0]: constants.EI_DATA[1]])[0]
+
+        if ei_data == constants.ELFDATA2LSB:
+            e_version = unpack("<I", data[constants.E_VERSION[0]: constants.E_VERSION[1]])[0]
+            # If the sample is truly little-endian, then e_version should be
+            # equal to 1. If it's not, then ei_data is corrupted and the sample
+            # is actually big-endian.
+            return True if e_version == expected_e_version else False
+        elif ei_data == constants.ELFDATA2MSB:
+            e_version = unpack(">I", data[constants.E_VERSION[0]: constants.E_VERSION[1]])[0]
+            # If the sample is truly big-endian, then e_version should be
+            # equal to 1. If it's not, then ei_data is corrupted and the sample
+            # is actually little-endian.
+            return False if e_version == expected_e_version else True
+
+        return None
+
+    def is_32_bit(self, data):
+        """
+        This function determines the bitness of the sample based on heuristics.
+        For some e_machine values like 386, AMD64 it is straightforward to
+        determine bitness. But for others like MIPS, it is not so. For the same
+        e_machine == MIPS, a file can be 32-bit or 64-bit.
+
+        I don't trust the value of EI_CLASS in the ELF header.
+
+        :param data: Input file contents
+        :type data: <class 'bytes'>
+        :return: True if little endian, False if big endian
+        """
+        # Defines the value of e_phentsize for 32-bit and 64-bit based on ELF
+        # specification. AFAIK, these are always true and should be accurate
+        # for a functioning ELF file.
+        expected_32bit_e_phentsize = 32
+        expected_64bit_e_phentsize = 56
+
+        e_phentsize_32_bit = unpack(f"{self.endian}H", data[constants.ELF32HEADEROFFSETS.E_PHENTSIZE[0]:
+                                                            constants.ELF32HEADEROFFSETS.E_PHENTSIZE[1]])[0]
+        e_phentsize_64_bit = unpack(f"{self.endian}H", data[constants.ELF64HEADEROFFSETS.E_PHENTSIZE[0]:
+                                                            constants.ELF64HEADEROFFSETS.E_PHENTSIZE[1]])[0]
+
+        if e_phentsize_32_bit == expected_32bit_e_phentsize:
+            return True
+        elif e_phentsize_64_bit == expected_64bit_e_phentsize:
+            return False
+
+        # Unknown bitness
+        return None
 
     def get_target_arch(self, data):
         """
@@ -42,17 +112,16 @@ class ELFHeader:
 
         :param data: Input file contents
         :type data: <class 'bytes'>
-        :return: None
-        :rtype: None
         """
         try:
-            self.e_machine = data[constants.E_MACHINE[0]:
-                                  constants.E_MACHINE[1]]
-            self.arch_metadata = structures.ARCH[self.e_machine]
+            self.e_machine = pack(f"{self.endian}H",
+                                  unpack(f"{self.endian}H",
+                                         data[constants.E_MACHINE[0]: constants.E_MACHINE[1]])[0])
+            return arch_mappings.ArchMappings().get_arch_obj(self.e_machine)
         except KeyError as e:
-            LOG.error("Unsupported architecture: " + hex(unpack('<H',
-                                                                data[constants.E_MACHINE[0]:
-                                                                     constants.E_MACHINE[1]])[0]))
+            LOG.error("Unsupported architecture: " + hex(unpack(f"{self.endian}H",
+                                                         data[constants.E_MACHINE[0]:
+                                                              constants.E_MACHINE[1]])[0]))
             raise exceptions.ELFHeaderError("Error in ELF Header:"
                                             "Unsupported architecture")
 
@@ -114,31 +183,42 @@ class ELFHeader:
         :return: Updated ELF64 header field and values mapping
         :rtype: dict
         """
-        e_phoff = unpack("<Q", data[constants.ELF64HEADEROFFSETS.E_PHOFF[0]:
-                                    constants.ELF64HEADEROFFSETS.E_PHOFF[1]])[0]
+        e_phoff = unpack(f"{self.endian}Q", data[constants.ELF64HEADEROFFSETS.E_PHOFF[0]:
+                                                 constants.ELF64HEADEROFFSETS.E_PHOFF[1]])[0]
+
         if e_phoff < self.arch_metadata["e_phoff"]:
             LOG.info("There is likely an ELF header and program header overlap. "
                      "Lepton is not equipped to handle this scenario.")
             return None
 
         field_values.update({
-            "e_type": data[constants.ELF64HEADEROFFSETS.E_TYPE[0]:
-                           constants.ELF64HEADEROFFSETS.E_TYPE[1]],
-            "e_entry": data[constants.ELF64HEADEROFFSETS.E_ENTRY[0]:
-                            constants.ELF64HEADEROFFSETS.E_ENTRY[1]],
-            "e_phoff": pack("<Q", self.arch_metadata["e_phoff"]),
-            "e_shoff": data[constants.ELF64HEADEROFFSETS.E_SHOFF[0]:
-                            constants.ELF64HEADEROFFSETS.E_SHOFF[1]],
-            "e_ehsize": pack("<H", self.arch_metadata["e_ehsize"]),
-            "e_phentsize": pack("<H", self.arch_metadata["e_phentsize"]),
-            "e_phnum": data[constants.ELF64HEADEROFFSETS.E_PHNUM[0]:
-                            constants.ELF64HEADEROFFSETS.E_PHNUM[1]],
-            "e_shentsize": pack("<H", self.arch_metadata["e_shentsize"]),
-            "e_shnum": data[constants.ELF64HEADEROFFSETS.E_SHNUM[0]:
-                            constants.ELF64HEADEROFFSETS.E_SHNUM[1]],
-            "e_shstrndx": data[constants.ELF64HEADEROFFSETS.E_SHSTRNDX[0]:
-                               constants.ELF64HEADEROFFSETS.E_SHSTRNDX[1]]
+            "e_type": pack(f"{self.endian}H",
+                           unpack(f"{self.endian}H", data[constants.ELF64HEADEROFFSETS.E_TYPE[0]:
+                                                          constants.ELF64HEADEROFFSETS.E_TYPE[1]])[0]),
+            "e_entry": pack(f"{self.endian}Q",
+                            unpack(f"{self.endian}Q", data[constants.ELF64HEADEROFFSETS.E_ENTRY[0]:
+                                                           constants.ELF64HEADEROFFSETS.E_ENTRY[1]])[0]),
+            "e_phoff": pack(f"{self.endian}Q", self.arch_metadata["e_phoff"]),
+            "e_shoff": pack(f"{self.endian}Q",
+                            unpack(f"{self.endian}Q", data[constants.ELF64HEADEROFFSETS.E_SHOFF[0]:
+                                                           constants.ELF64HEADEROFFSETS.E_SHOFF[1]])[0]),
+            "e_flags": pack(f"{self.endian}I",
+                            unpack(f"{self.endian}I", data[constants.ELF64HEADEROFFSETS.E_FLAGS[0]:
+                                                           constants.ELF64HEADEROFFSETS.E_FLAGS[1]])[0]),
+            "e_ehsize": pack(f"{self.endian}H", self.arch_metadata["e_ehsize"]),
+            "e_phentsize": pack(f"{self.endian}H", self.arch_metadata["e_phentsize"]),
+            "e_phnum": pack(f"{self.endian}H",
+                            unpack(f"{self.endian}H", data[constants.ELF64HEADEROFFSETS.E_PHNUM[0]:
+                                                           constants.ELF64HEADEROFFSETS.E_PHNUM[1]])[0]),
+            "e_shentsize": pack(f"{self.endian}H", self.arch_metadata["e_shentsize"]),
+            "e_shnum": pack(f"{self.endian}H",
+                            unpack(f"{self.endian}H", data[constants.ELF64HEADEROFFSETS.E_SHNUM[0]:
+                                                           constants.ELF64HEADEROFFSETS.E_SHNUM[1]])[0]),
+            "e_shstrndx": pack(f"{self.endian}H",
+                               unpack(f"{self.endian}H", data[constants.ELF64HEADEROFFSETS.E_SHSTRNDX[0]:
+                                                              constants.ELF64HEADEROFFSETS.E_SHSTRNDX[1]])[0])
         })
+
         return field_values
 
     def _update_elf32_values(self, field_values, data):
@@ -152,31 +232,42 @@ class ELFHeader:
         :return: Updated ELF32 header field and values mapping
         :rtype: dict
         """
-        e_phoff = unpack("<I", data[constants.ELF32HEADEROFFSETS.E_PHOFF[0]:
-                                    constants.ELF32HEADEROFFSETS.E_PHOFF[1]])[0]
+        e_phoff = unpack(f"{self.endian}I", data[constants.ELF32HEADEROFFSETS.E_PHOFF[0]:
+                                                 constants.ELF32HEADEROFFSETS.E_PHOFF[1]])[0]
+
         if e_phoff < self.arch_metadata["e_phoff"]:
             LOG.info("There is likely an ELF header and program header overlap. "
                      "Lepton is not equipped to handle this scenario.")
             return None
 
         field_values.update({
-            "e_type": data[constants.ELF32HEADEROFFSETS.E_TYPE[0]:
-                           constants.ELF32HEADEROFFSETS.E_TYPE[1]],
-            "e_entry": data[constants.ELF32HEADEROFFSETS.E_ENTRY[0]:
-                            constants.ELF32HEADEROFFSETS.E_ENTRY[1]],
-            "e_phoff": pack("<I", self.arch_metadata["e_phoff"]),
-            "e_shoff": data[constants.ELF32HEADEROFFSETS.E_SHOFF[0]:
-                            constants.ELF32HEADEROFFSETS.E_SHOFF[1]],
-            "e_ehsize": pack("<H", self.arch_metadata["e_ehsize"]),
-            "e_phentsize": pack("<H", self.arch_metadata["e_phentsize"]),
-            "e_phnum": data[constants.ELF32HEADEROFFSETS.E_PHNUM[0]:
-                            constants.ELF32HEADEROFFSETS.E_PHNUM[1]],
-            "e_shentsize": pack("<H", self.arch_metadata["e_shentsize"]),
-            "e_shnum": data[constants.ELF32HEADEROFFSETS.E_SHNUM[0]:
-                            constants.ELF32HEADEROFFSETS.E_SHNUM[1]],
-            "e_shstrndx": data[constants.ELF32HEADEROFFSETS.E_SHSTRNDX[0]:
-                               constants.ELF32HEADEROFFSETS.E_SHSTRNDX[1]]
+            "e_type": pack(f"{self.endian}H",
+                           unpack(f"{self.endian}H", data[constants.ELF32HEADEROFFSETS.E_TYPE[0]:
+                                                          constants.ELF32HEADEROFFSETS.E_TYPE[1]])[0]),
+            "e_entry": pack(f"{self.endian}I",
+                            unpack(f"{self.endian}I", data[constants.ELF32HEADEROFFSETS.E_ENTRY[0]:
+                                                           constants.ELF32HEADEROFFSETS.E_ENTRY[1]])[0]),
+            "e_phoff": pack(f"{self.endian}I", self.arch_metadata["e_phoff"]),
+            "e_shoff": pack(f"{self.endian}I",
+                            unpack(f"{self.endian}I", data[constants.ELF32HEADEROFFSETS.E_SHOFF[0]:
+                                                           constants.ELF32HEADEROFFSETS.E_SHOFF[1]])[0]),
+            "e_flags": pack(f"{self.endian}I",
+                            unpack(f"{self.endian}I", data[constants.ELF32HEADEROFFSETS.E_FLAGS[0]:
+                                                           constants.ELF32HEADEROFFSETS.E_FLAGS[1]])[0]),
+            "e_ehsize": pack(f"{self.endian}H", self.arch_metadata["e_ehsize"]),
+            "e_phentsize": pack(f"{self.endian}H", self.arch_metadata["e_phentsize"]),
+            "e_phnum": pack(f"{self.endian}H",
+                            unpack(f"{self.endian}H", data[constants.ELF32HEADEROFFSETS.E_PHNUM[0]:
+                                                           constants.ELF32HEADEROFFSETS.E_PHNUM[1]])[0]),
+            "e_shentsize": pack(f"{self.endian}H", self.arch_metadata["e_shentsize"]),
+            "e_shnum": pack(f"{self.endian}H",
+                            unpack(f"{self.endian}H", data[constants.ELF32HEADEROFFSETS.E_SHNUM[0]:
+                                                           constants.ELF32HEADEROFFSETS.E_SHNUM[1]])[0]),
+            "e_shstrndx": pack(f"{self.endian}H",
+                               unpack(f"{self.endian}H", data[constants.ELF32HEADEROFFSETS.E_SHSTRNDX[0]:
+                                                              constants.ELF32HEADEROFFSETS.E_SHSTRNDX[1]])[0])
         })
+
         return field_values
 
     def build_new_header(self, data):
@@ -192,15 +283,14 @@ class ELFHeader:
         """
         field_values = {
             "ei_mag": constants.ELFMAGIC,
-            "ei_class": pack("B", self.arch_metadata["ei_class"]),
-            "ei_data": pack("B", self.arch_metadata["ei_data"]),
-            "ei_version": pack("B", self.arch_metadata["ei_version"]),
-            "ei_osabi": pack("B", self.arch_metadata["ei_osabi"]),
-            "ei_abiversion": pack("B", self.arch_metadata["ei_abiversion"]),
+            "ei_class": pack(f"{self.endian}B", self.arch_metadata["ei_class"]),
+            "ei_data": pack(f"{self.endian}B", self.arch_metadata["ei_data"]),
+            "ei_version": pack(f"{self.endian}B", self.arch_metadata["ei_version"]),
+            "ei_osabi": pack(f"{self.endian}B", self.arch_metadata["ei_osabi"]),
+            "ei_abiversion": pack(f"{self.endian}B", self.arch_metadata["ei_abiversion"]),
             "ei_pad": self.arch_metadata["padding"],
             "e_machine": self.e_machine,
-            "e_version": pack("<I", self.arch_metadata["e_version"]),
-            "e_flags": pack("<I", 0)
+            "e_version": pack(f"{self.endian}I", self.arch_metadata["e_version"]),
         }
 
         if self.arch_metadata["ei_class"] == 1:

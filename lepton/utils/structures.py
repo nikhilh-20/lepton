@@ -79,36 +79,3 @@ ELF64SECTIONHEADER = {
     "sh_addralign": bytearray(8),
     "sh_entsize": bytearray(8)
 }
-
-# Architecture-specific information is tied to the CPU. ELF files of specified
-# architectures are expected to contain these values.
-ARCH = {
-    b"\x03\x00": {
-        "e_machine": "386",
-        "ei_class": 1,
-        "ei_data": 1,
-        "ei_version": 1,
-        "ei_osabi": 0,
-        "ei_abiversion": 0,
-        "padding": b"\x00\x00\x00\x00\x00\x00\x00",
-        "e_phoff": 0x34,
-        "e_ehsize": 0x34,
-        "e_phentsize": 0x20,
-        "e_shentsize": 0x28,
-        "e_version": 1
-    },
-    b"\x3E\x00": {
-        "e_machine": "AMD64",
-        "ei_class": 2,
-        "ei_data": 1,
-        "ei_version": 1,
-        "ei_osabi": 0,
-        "ei_abiversion": 0,
-        "padding": b"\x00\x00\x00\x00\x00\x00\x00",
-        "e_phoff": 0x40,
-        "e_ehsize": 0x40,
-        "e_phentsize": 0x38,
-        "e_shentsize": 0x40,
-        "e_version": 1
-    }
-}

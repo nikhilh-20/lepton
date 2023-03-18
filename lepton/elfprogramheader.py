@@ -1,7 +1,7 @@
 import os
 import logging
 from copy import deepcopy
-from struct import unpack
+from struct import pack, unpack
 
 import lepton.utils.constants as constants
 import lepton.utils.exceptions as exceptions
@@ -12,17 +12,19 @@ LOG = logging.getLogger(__name__)
 
 
 class ELFProgramHeaderTable:
-    def __init__(self, data, elfheader):
+    def __init__(self, data, elfheader, little_endian):
         """
         :param data: Input file contents
         :type data: <class 'bytes'>
         :param elfheader: Lepton-constructed ELF header contents
         :type elfheader: dict
+        :param little_endian: Flag to indicate whether the ELF file is little endian
+        :type little_endian: bool
         """
+        self.endian = "<" if little_endian else ">"
         self.entries = self.build_program_header_table(data, elfheader)
 
-    @staticmethod
-    def _update_elf32_values(data, pheader_struct, phdr_num):
+    def _update_elf32_values(self, data, pheader_struct, phdr_num):
         """
         Update ELF32 program header table entry fields with values.
 
@@ -37,37 +39,43 @@ class ELFProgramHeaderTable:
         """
         # Calculate offset of p_hdr
         # p_hdr_offset = e_phoff
-        e_phoff = unpack('<I', data[constants.ELF32HEADEROFFSETS.E_PHOFF[0]:
-                                    constants.ELF32HEADEROFFSETS.E_PHOFF[1]])[0]
-        e_phentsize = unpack('<H', data[constants.ELF32HEADEROFFSETS.E_PHENTSIZE[0]:
-                                        constants.ELF32HEADEROFFSETS.E_PHENTSIZE[1]])[0]
+        e_phoff = unpack(f"{self.endian}I", data[constants.ELF32HEADEROFFSETS.E_PHOFF[0]:
+                                                 constants.ELF32HEADEROFFSETS.E_PHOFF[1]])[0]
+        e_phentsize = unpack(f"{self.endian}H", data[constants.ELF32HEADEROFFSETS.E_PHENTSIZE[0]:
+                                                     constants.ELF32HEADEROFFSETS.E_PHENTSIZE[1]])[0]
         phdr = deepcopy(pheader_struct)
-        # p_hdr_i_offset = e_phoff + e_phentsize * phdr_num
         phdr_entry_offset = e_phoff + e_phentsize * phdr_num
 
         # The program header fields must be accurate in the binary since these are needed
         # by the ELF loader.
-        phdr["p_type"] = data[phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_TYPE[0]:
-                              phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_TYPE[1]]
-        phdr["p_offset"] = data[phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_OFFSET[0]:
-                                phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_OFFSET[1]]
-        phdr["p_vaddr"] = data[phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_VADDR[0]:
-                               phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_VADDR[1]]
-        phdr["p_paddr"] = data[phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_PADDR[0]:
-                               phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_PADDR[1]]
-        phdr["p_filesz"] = data[phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_FILESZ[0]:
-                                phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_FILESZ[1]]
-        phdr["p_memsz"] = data[phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_MEMSZ[0]:
-                               phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_MEMSZ[1]]
-        phdr["p_flags"] = data[phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_FLAGS[0]:
-                               phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_FLAGS[1]]
-        phdr["p_align"] = data[phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_ALIGN[0]:
-                               phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_ALIGN[1]]
+        phdr["p_type"] = pack(f"{self.endian}I",
+                              unpack(f"{self.endian}I", data[phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_TYPE[0]:
+                                                             phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_TYPE[1]])[0])
+        phdr["p_offset"] = pack(f"{self.endian}I",
+                                unpack(f"{self.endian}I", data[phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_OFFSET[0]:
+                                                               phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_OFFSET[1]])[0])
+        phdr["p_vaddr"] = pack(f"{self.endian}I",
+                               unpack(f"{self.endian}I", data[phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_VADDR[0]:
+                                                              phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_VADDR[1]])[0])
+        phdr["p_paddr"] = pack(f"{self.endian}I",
+                               unpack(f"{self.endian}I", data[phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_PADDR[0]:
+                                                              phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_PADDR[1]])[0])
+        phdr["p_filesz"] = pack(f"{self.endian}I",
+                                unpack(f"{self.endian}I", data[phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_FILESZ[0]:
+                                                               phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_FILESZ[1]])[0])
+        phdr["p_memsz"] = pack(f"{self.endian}I",
+                               unpack(f"{self.endian}I", data[phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_MEMSZ[0]:
+                                                              phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_MEMSZ[1]])[0])
+        phdr["p_flags"] = pack(f"{self.endian}I",
+                               unpack(f"{self.endian}I", data[phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_FLAGS[0]:
+                                                              phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_FLAGS[1]])[0])
+        phdr["p_align"] = pack(f"{self.endian}I",
+                               unpack(f"{self.endian}I", data[phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_ALIGN[0]:
+                                                              phdr_entry_offset + constants.ELF32PROGRAMHEADEROFFSETS.P_ALIGN[1]])[0])
 
         return phdr
 
-    @staticmethod
-    def _update_elf64_values(data, pheader_struct, phdr_num):
+    def _update_elf64_values(self, data, pheader_struct, phdr_num):
         """
         Update ELF64 program header table entry fields with values.
 
@@ -81,11 +89,10 @@ class ELFProgramHeaderTable:
         :rtype: dict
         """
         # Calculate offset of p_hdr
-        # p_hdr_offset = e_phoff
-        e_phoff = unpack('<Q', data[constants.ELF64HEADEROFFSETS.E_PHOFF[0]:
-                                    constants.ELF64HEADEROFFSETS.E_PHOFF[1]])[0]
-        e_phentsize = unpack('<H', data[constants.ELF64HEADEROFFSETS.E_PHENTSIZE[0]:
-                                        constants.ELF64HEADEROFFSETS.E_PHENTSIZE[1]])[0]
+        e_phoff = unpack(f"{self.endian}Q", data[constants.ELF64HEADEROFFSETS.E_PHOFF[0]:
+                                                 constants.ELF64HEADEROFFSETS.E_PHOFF[1]])[0]
+        e_phentsize = unpack(f"{self.endian}H", data[constants.ELF64HEADEROFFSETS.E_PHENTSIZE[0]:
+                                                     constants.ELF64HEADEROFFSETS.E_PHENTSIZE[1]])[0]
         # p_hdr_i_offset = e_phoff + e_phentsize * phdr_num
         phdr_entry_offset = e_phoff + e_phentsize * phdr_num
 
@@ -93,22 +100,30 @@ class ELFProgramHeaderTable:
 
         # The program header fields must be accurate in the binary since these are needed
         # by the ELF loader.
-        phdr["p_type"] = data[phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_TYPE[0]:
-                              phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_TYPE[1]]
-        phdr["p_offset"] = data[phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_OFFSET[0]:
-                                phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_OFFSET[1]]
-        phdr["p_vaddr"] = data[phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_VADDR[0]:
-                               phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_VADDR[1]]
-        phdr["p_paddr"] = data[phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_PADDR[0]:
-                               phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_PADDR[1]]
-        phdr["p_filesz"] = data[phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_FILESZ[0]:
-                                phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_FILESZ[1]]
-        phdr["p_memsz"] = data[phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_MEMSZ[0]:
-                               phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_MEMSZ[1]]
-        phdr["p_flags"] = data[phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_FLAGS[0]:
-                               phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_FLAGS[1]]
-        phdr["p_align"] = data[phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_ALIGN[0]:
-                               phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_ALIGN[1]]
+        phdr["p_type"] = pack(f"{self.endian}I",
+                              unpack(f"{self.endian}I", data[phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_TYPE[0]:
+                                                             phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_TYPE[1]])[0])
+        phdr["p_offset"] = pack(f"{self.endian}Q",
+                                unpack(f"{self.endian}Q", data[phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_OFFSET[0]:
+                                                               phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_OFFSET[1]])[0])
+        phdr["p_vaddr"] = pack(f"{self.endian}Q",
+                               unpack(f"{self.endian}Q", data[phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_VADDR[0]:
+                                                              phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_VADDR[1]])[0])
+        phdr["p_paddr"] = pack(f"{self.endian}Q",
+                               unpack(f"{self.endian}Q", data[phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_PADDR[0]:
+                                                              phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_PADDR[1]])[0])
+        phdr["p_filesz"] = pack(f"{self.endian}Q",
+                                unpack(f"{self.endian}Q", data[phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_FILESZ[0]:
+                                                               phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_FILESZ[1]])[0])
+        phdr["p_memsz"] = pack(f"{self.endian}Q",
+                               unpack(f"{self.endian}Q", data[phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_MEMSZ[0]:
+                                                              phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_MEMSZ[1]])[0])
+        phdr["p_flags"] = pack(f"{self.endian}I",
+                               unpack(f"{self.endian}I", data[phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_FLAGS[0]:
+                                                              phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_FLAGS[1]])[0])
+        phdr["p_align"] = pack(f"{self.endian}Q",
+                               unpack(f"{self.endian}Q", data[phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_ALIGN[0]:
+                                                              phdr_entry_offset + constants.ELF64PROGRAMHEADEROFFSETS.P_ALIGN[1]])[0])
 
         return phdr
 
@@ -146,7 +161,7 @@ class ELFProgramHeaderTable:
         :rtype: list of dict
         """
         phdr_table = []
-        phnum = unpack("<H", elfheader["e_phnum"])[0]
+        phnum = unpack(f"{self.endian}H", elfheader["e_phnum"])[0]
         ei_class = elfheader["e_ident"][4]
 
         for phdr_num in range(phnum):

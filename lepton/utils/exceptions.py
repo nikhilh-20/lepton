@@ -12,6 +12,13 @@ class ELFMagicError(Error):
         self.message = message
 
 
+class UnsupportedArchError(Error):
+    """Exception raised if the architecture is not supported"""
+
+    def __init__(self, message):
+        self.message = message
+
+
 class ELFHeaderError(Error):
     """Exception raised if there is a problem with the ELF header"""
 
