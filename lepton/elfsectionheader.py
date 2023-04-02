@@ -453,13 +453,19 @@ class ELFSectionHeaderTable:
             if ei_class == 1:
                 elfheader["e_shnum"], elfheader["e_shoff"], elfheader["e_shstrndx"] = \
                     pack(f"{self.endian}H", sh_num), pack(f"{self.endian}I", sh_off), pack(f"{self.endian}H", shstrndx)
-                shdr = self._build_shdr(data, structures.ELF32SECTIONHEADER,
-                                        sh_off, shdr_num, shentsize)
+                try:
+                    shdr = self._build_shdr(data, structures.ELF32SECTIONHEADER,
+                                            sh_off, shdr_num, shentsize)
+                except error:
+                    continue
             else:
                 elfheader["e_shnum"], elfheader["e_shoff"], elfheader["e_shstrndx"] = \
                     pack(f"{self.endian}H", sh_num), pack(f"{self.endian}Q", sh_off), pack(f"{self.endian}H", shstrndx)
-                shdr = self._build_shdr(data, structures.ELF64SECTIONHEADER,
-                                        sh_off, shdr_num, shentsize)
+                try:
+                    shdr = self._build_shdr(data, structures.ELF64SECTIONHEADER,
+                                            sh_off, shdr_num, shentsize)
+                except error:
+                    continue
 
             shdr_table.append(shdr)
 
