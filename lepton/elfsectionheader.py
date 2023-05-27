@@ -449,18 +449,21 @@ class ELFSectionHeaderTable:
             shstrndx = self.find_section_name_string_table(data, sh_num, sh_off,
                                                            shentsize, ei_class)
 
+        if ei_class == 1:
+            elfheader["e_shnum"], elfheader["e_shoff"], elfheader["e_shstrndx"] = \
+                pack(f"{self.endian}H", sh_num), pack(f"{self.endian}I", sh_off), pack(f"{self.endian}H", shstrndx)
+        else:
+            elfheader["e_shnum"], elfheader["e_shoff"], elfheader["e_shstrndx"] = \
+                pack(f"{self.endian}H", sh_num), pack(f"{self.endian}Q", sh_off), pack(f"{self.endian}H", shstrndx)
+
         for shdr_num in range(sh_num):
             if ei_class == 1:
-                elfheader["e_shnum"], elfheader["e_shoff"], elfheader["e_shstrndx"] = \
-                    pack(f"{self.endian}H", sh_num), pack(f"{self.endian}I", sh_off), pack(f"{self.endian}H", shstrndx)
                 try:
                     shdr = self._build_shdr(data, structures.ELF32SECTIONHEADER,
                                             sh_off, shdr_num, shentsize)
                 except error:
                     continue
             else:
-                elfheader["e_shnum"], elfheader["e_shoff"], elfheader["e_shstrndx"] = \
-                    pack(f"{self.endian}H", sh_num), pack(f"{self.endian}Q", sh_off), pack(f"{self.endian}H", shstrndx)
                 try:
                     shdr = self._build_shdr(data, structures.ELF64SECTIONHEADER,
                                             sh_off, shdr_num, shentsize)
