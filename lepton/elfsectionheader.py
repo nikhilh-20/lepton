@@ -1,7 +1,7 @@
 import os
+import struct
 import logging
 from copy import deepcopy
-from struct import unpack, pack, error
 
 import lepton.utils.constants as constants
 import lepton.utils.exceptions as exceptions
@@ -48,36 +48,36 @@ class ELFSectionHeaderTable:
         shdr = deepcopy(sheader_struct)
 
         # The section header fields may be inaccurate.
-        shdr["sh_name"] = pack(f"{self.endian}I",
-                               unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_NAME[0]:
-                                                              shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_NAME[1]])[0])
-        shdr["sh_type"] = pack(f"{self.endian}I",
-                               unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_TYPE[0]:
-                                                              shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_TYPE[1]])[0])
-        shdr["sh_flags"] = pack(f"{self.endian}I",
-                                unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_FLAGS[0]:
-                                                               shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_FLAGS[1]])[0])
-        shdr["sh_addr"] = pack(f"{self.endian}I",
-                               unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_ADDR[0]:
-                                                              shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_ADDR[1]])[0])
-        shdr["sh_offset"] = pack(f"{self.endian}I",
-                                 unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_OFFSET[0]:
-                                                                shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_OFFSET[1]])[0])
-        shdr["sh_size"] = pack(f"{self.endian}I",
-                               unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_SIZE[0]:
-                                                              shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_SIZE[1]])[0])
-        shdr["sh_link"] = pack(f"{self.endian}I",
-                               unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_LINK[0]:
-                                                              shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_LINK[1]])[0])
-        shdr["sh_info"] = pack(f"{self.endian}I",
-                               unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_INFO[0]:
-                                                              shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_INFO[1]])[0])
-        shdr["sh_addralign"] = pack(f"{self.endian}I",
-                                    unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_ADDRALIGN[0]:
-                                                                   shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_ADDRALIGN[1]])[0])
-        shdr["sh_entsize"] = pack(f"{self.endian}I",
-                                  unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_ENTSIZE[0]:
-                                                                 shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_ENTSIZE[1]])[0])
+        shdr["sh_name"] = struct.pack(f"{self.endian}I",
+                                      struct.unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_NAME[0]:
+                                                                            shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_NAME[1]])[0])
+        shdr["sh_type"] = struct.pack(f"{self.endian}I",
+                                      struct.unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_TYPE[0]:
+                                                                            shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_TYPE[1]])[0])
+        shdr["sh_flags"] = struct.pack(f"{self.endian}I",
+                                       struct.unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_FLAGS[0]:
+                                                                             shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_FLAGS[1]])[0])
+        shdr["sh_addr"] = struct.pack(f"{self.endian}I",
+                                      struct.unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_ADDR[0]:
+                                                                            shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_ADDR[1]])[0])
+        shdr["sh_offset"] = struct.pack(f"{self.endian}I",
+                                        struct.unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_OFFSET[0]:
+                                                                              shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_OFFSET[1]])[0])
+        shdr["sh_size"] = struct.pack(f"{self.endian}I",
+                                      struct.unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_SIZE[0]:
+                                                                            shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_SIZE[1]])[0])
+        shdr["sh_link"] = struct.pack(f"{self.endian}I",
+                                      struct.unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_LINK[0]:
+                                                                            shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_LINK[1]])[0])
+        shdr["sh_info"] = struct.pack(f"{self.endian}I",
+                                      struct.unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_INFO[0]:
+                                                                            shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_INFO[1]])[0])
+        shdr["sh_addralign"] = struct.pack(f"{self.endian}I",
+                                           struct.unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_ADDRALIGN[0]:
+                                                                                 shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_ADDRALIGN[1]])[0])
+        shdr["sh_entsize"] = struct.pack(f"{self.endian}I",
+                                         struct.unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_ENTSIZE[0]:
+                                                                               shdr_entry_offset + constants.ELF32SECTIONHEADEROFFSETS.SH_ENTSIZE[1]])[0])
 
         return shdr
 
@@ -104,36 +104,36 @@ class ELFSectionHeaderTable:
         shdr = deepcopy(sheader_struct)
 
         # The section header fields may be inaccurate.
-        shdr["sh_name"] = pack(f"{self.endian}I",
-                               unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_NAME[0]:
-                                                              shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_NAME[1]])[0])
-        shdr["sh_type"] = pack(f"{self.endian}I",
-                               unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_TYPE[0]:
-                                                              shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_TYPE[1]])[0])
-        shdr["sh_flags"] = pack(f"{self.endian}Q",
-                                unpack(f"{self.endian}Q", data[shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_FLAGS[0]:
-                                                               shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_FLAGS[1]])[0])
-        shdr["sh_addr"] = pack(f"{self.endian}Q",
-                               unpack(f"{self.endian}Q", data[shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_ADDR[0]:
-                                                              shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_ADDR[1]])[0])
-        shdr["sh_offset"] = pack(f"{self.endian}Q",
-                                 unpack(f"{self.endian}Q", data[shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_OFFSET[0]:
-                                                                shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_OFFSET[1]])[0])
-        shdr["sh_size"] = pack(f"{self.endian}Q",
-                               unpack(f"{self.endian}Q", data[shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_SIZE[0]:
-                                                              shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_SIZE[1]])[0])
-        shdr["sh_link"] = pack(f"{self.endian}I",
-                               unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_LINK[0]:
-                                                              shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_LINK[1]])[0])
-        shdr["sh_info"] = pack(f"{self.endian}I",
-                               unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_INFO[0]:
-                                                              shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_INFO[1]])[0])
-        shdr["sh_addralign"] = pack(f"{self.endian}Q",
-                                    unpack(f"{self.endian}Q", data[shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_ADDRALIGN[0]:
-                                                                   shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_ADDRALIGN[1]])[0])
-        shdr["sh_entsize"] = pack(f"{self.endian}Q",
-                                  unpack(f"{self.endian}Q", data[shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_ENTSIZE[0]:
-                                                                 shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_ENTSIZE[1]])[0])
+        shdr["sh_name"] = struct.pack(f"{self.endian}I",
+                                      struct.unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_NAME[0]:
+                                                                            shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_NAME[1]])[0])
+        shdr["sh_type"] = struct.pack(f"{self.endian}I",
+                                      struct.unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_TYPE[0]:
+                                                                            shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_TYPE[1]])[0])
+        shdr["sh_flags"] = struct.pack(f"{self.endian}Q",
+                                       struct.unpack(f"{self.endian}Q", data[shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_FLAGS[0]:
+                                                                             shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_FLAGS[1]])[0])
+        shdr["sh_addr"] = struct.pack(f"{self.endian}Q",
+                                      struct.unpack(f"{self.endian}Q", data[shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_ADDR[0]:
+                                                                            shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_ADDR[1]])[0])
+        shdr["sh_offset"] = struct.pack(f"{self.endian}Q",
+                                        struct.unpack(f"{self.endian}Q", data[shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_OFFSET[0]:
+                                                                              shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_OFFSET[1]])[0])
+        shdr["sh_size"] = struct.pack(f"{self.endian}Q",
+                                      struct.unpack(f"{self.endian}Q", data[shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_SIZE[0]:
+                                                                            shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_SIZE[1]])[0])
+        shdr["sh_link"] = struct.pack(f"{self.endian}I",
+                                      struct.unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_LINK[0]:
+                                                                            shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_LINK[1]])[0])
+        shdr["sh_info"] = struct.pack(f"{self.endian}I",
+                                      struct.unpack(f"{self.endian}I", data[shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_INFO[0]:
+                                                                            shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_INFO[1]])[0])
+        shdr["sh_addralign"] = struct.pack(f"{self.endian}Q",
+                                           struct.unpack(f"{self.endian}Q", data[shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_ADDRALIGN[0]:
+                                                                                 shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_ADDRALIGN[1]])[0])
+        shdr["sh_entsize"] = struct.pack(f"{self.endian}Q",
+                                         struct.unpack(f"{self.endian}Q", data[shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_ENTSIZE[0]:
+                                                                               shdr_entry_offset + constants.ELF64SECTIONHEADEROFFSETS.SH_ENTSIZE[1]])[0])
 
         return shdr
 
@@ -156,12 +156,17 @@ class ELFSectionHeaderTable:
         :rtype: list of dict
         """
         if sheader_struct == structures.ELF32SECTIONHEADER:
-            return self._update_elf32_values(data, sheader_struct, sh_off, shdr_num, shentsize)
+            try:
+                return self._update_elf32_values(data, sheader_struct, sh_off, shdr_num, shentsize)
+            except struct.error:
+                raise exceptions.ELFSectionHeaderTableError("Invalid Section Header Structure.")
         elif sheader_struct == structures.ELF64SECTIONHEADER:
-            return self._update_elf64_values(data, sheader_struct, sh_off, shdr_num, shentsize)
+            try:
+                return self._update_elf64_values(data, sheader_struct, sh_off, shdr_num, shentsize)
+            except struct.error:
+                raise exceptions.ELFSectionHeaderTableError("Invalid Section Header Structure.")
         else:
-            raise exceptions.ELFSectionHeaderTableError("Invalid Section"
-                                                        "Header Structure.")
+            raise exceptions.ELFSectionHeaderTableError("Invalid Section Header Structure.")
 
     def _verify_section_header_table(self, data, shoff_, shentsize, ei_class):
         """
@@ -192,7 +197,7 @@ class ELFSectionHeaderTable:
                 sh_type_len = constants.ELF32SECTIONHEADEROFFSETS.SH_TYPE[1] -\
                               constants.ELF32SECTIONHEADEROFFSETS.SH_TYPE[0]
 
-                current_entry_sh_type = unpack(f"{self.endian}I", data[sh_type_start: sh_type_start + sh_type_len])[0]
+                current_entry_sh_type = struct.unpack(f"{self.endian}I", data[sh_type_start: sh_type_start + sh_type_len])[0]
                 if current_entry_sh_type != 0x1:
                     # Not sh_type == PROGBITS
                     check -= 1
@@ -202,13 +207,13 @@ class ELFSectionHeaderTable:
                 sh_flags_len = constants.ELF32SECTIONHEADEROFFSETS.SH_FLAGS[1] -\
                                constants.ELF32SECTIONHEADEROFFSETS.SH_FLAGS[0]
 
-                current_entry_sh_flags = unpack(f"{self.endian}I", data[sh_flags_start: sh_flags_start + sh_flags_len])[0]
+                current_entry_sh_flags = struct.unpack(f"{self.endian}I", data[sh_flags_start: sh_flags_start + sh_flags_len])[0]
             elif ei_class == 2:
                 sh_type_start = current_entry + (constants.ELF64SECTIONHEADEROFFSETS.SH_NAME[1] -
                                                  constants.ELF64SECTIONHEADEROFFSETS.SH_NAME[0])
                 sh_type_len = constants.ELF64SECTIONHEADEROFFSETS.SH_TYPE[1] - \
                               constants.ELF64SECTIONHEADEROFFSETS.SH_TYPE[0]
-                current_entry_sh_type = unpack(f"{self.endian}I", data[sh_type_start: sh_type_start + sh_type_len])[0]
+                current_entry_sh_type = struct.unpack(f"{self.endian}I", data[sh_type_start: sh_type_start + sh_type_len])[0]
                 if current_entry_sh_type != 0x1:
                     # Not sh_type == PROGBITS
                     check -= 1
@@ -218,7 +223,7 @@ class ELFSectionHeaderTable:
                 sh_flags_len = constants.ELF64SECTIONHEADEROFFSETS.SH_FLAGS[1] - \
                                constants.ELF64SECTIONHEADEROFFSETS.SH_FLAGS[0]
 
-                current_entry_sh_flags = unpack(f"{self.endian}Q", data[sh_flags_start: sh_flags_start + sh_flags_len])[0]
+                current_entry_sh_flags = struct.unpack(f"{self.endian}Q", data[sh_flags_start: sh_flags_start + sh_flags_len])[0]
             else:
                 raise exceptions.ELFSectionHeaderTableError("Invalid EI_CLASS")
             # When SHF_WRITE and/or SHF_ALLOC and/or SHF_EXECINSTR and/or SHF_MASKPROC
@@ -313,7 +318,7 @@ class ELFSectionHeaderTable:
         for i in occurrences:
             try:
                 flag = self._verify_section_header_table(data, i, shentsize, ei_class)
-            except error:
+            except struct.error:
                 continue
 
             if flag:
@@ -357,7 +362,7 @@ class ELFSectionHeaderTable:
             else:
                 raise exceptions.ELFSectionHeaderTableError(f"Invalid EI_CLASS: {ei_class}")
 
-            current_entry_sh_type = unpack(f"{self.endian}I", data[sh_type_start: sh_type_start + sh_type_len])[0]
+            current_entry_sh_type = struct.unpack(f"{self.endian}I", data[sh_type_start: sh_type_start + sh_type_len])[0]
             if current_entry_sh_type != 3:
                 # sh_type != SHT_STRTAB
                 continue
@@ -375,11 +380,11 @@ class ELFSectionHeaderTable:
                 sh_offset_len = constants.ELF32SECTIONHEADEROFFSETS.SH_OFFSET[1] - \
                                 constants.ELF32SECTIONHEADEROFFSETS.SH_OFFSET[0]
 
-                sh_offset = unpack(f"{self.endian}I", data[sh_offset_start: sh_offset_start + sh_offset_len])[0]
+                sh_offset = struct.unpack(f"{self.endian}I", data[sh_offset_start: sh_offset_start + sh_offset_len])[0]
                 sh_size_start = sh_offset_start + sh_offset_len
                 sh_size_len = constants.ELF32SECTIONHEADEROFFSETS.SH_SIZE[1] - \
                               constants.ELF32SECTIONHEADEROFFSETS.SH_SIZE[0]
-                sh_size = unpack(f"{self.endian}I", data[sh_size_start: sh_size_start + sh_size_len])[0]
+                sh_size = struct.unpack(f"{self.endian}I", data[sh_size_start: sh_size_start + sh_size_len])[0]
             elif ei_class == 2:
                 sh_offset_start = current_entry + (constants.ELF64SECTIONHEADEROFFSETS.SH_NAME[1] -
                                                    constants.ELF64SECTIONHEADEROFFSETS.SH_NAME[0]) \
@@ -391,12 +396,12 @@ class ELFSectionHeaderTable:
                                      constants.ELF64SECTIONHEADEROFFSETS.SH_ADDR[0])
                 sh_offset_len = constants.ELF64SECTIONHEADEROFFSETS.SH_OFFSET[1] - \
                                 constants.ELF64SECTIONHEADEROFFSETS.SH_OFFSET[0]
-                sh_offset = unpack(f"{self.endian}Q", data[sh_offset_start: sh_offset_start + sh_offset_len])[0]
+                sh_offset = struct.unpack(f"{self.endian}Q", data[sh_offset_start: sh_offset_start + sh_offset_len])[0]
 
                 sh_size_start = sh_offset_start + sh_offset_len
                 sh_size_len = constants.ELF64SECTIONHEADEROFFSETS.SH_SIZE[1] - \
                               constants.ELF64SECTIONHEADEROFFSETS.SH_SIZE[0]
-                sh_size = unpack(f"{self.endian}Q", data[sh_size_start: sh_size_start + sh_size_len])[0]
+                sh_size = struct.unpack(f"{self.endian}Q", data[sh_size_start: sh_size_start + sh_size_len])[0]
             else:
                 raise exceptions.ELFSectionHeaderTableError(f"Invalid EI_CLASS: {ei_class}")
 
@@ -424,17 +429,17 @@ class ELFSectionHeaderTable:
         :rtype: list of dict
         """
         shdr_table = []
-        sh_num = unpack(f"{self.endian}H", elfheader["e_shnum"])[0]
-        shstrndx = unpack(f"{self.endian}H", elfheader["e_shstrndx"])[0]
+        sh_num = struct.unpack(f"{self.endian}H", elfheader["e_shnum"])[0]
+        shstrndx = struct.unpack(f"{self.endian}H", elfheader["e_shstrndx"])[0]
         ei_class = elfheader["e_ident"][4]
 
         if ei_class == 1:
-            sh_off = unpack(f"{self.endian}I", elfheader["e_shoff"])[0]
-            shentsize = unpack(f"{self.endian}H", data[constants.ELF32HEADEROFFSETS.E_SHENTSIZE[0]:
+            sh_off = struct.unpack(f"{self.endian}I", elfheader["e_shoff"])[0]
+            shentsize = struct.unpack(f"{self.endian}H", data[constants.ELF32HEADEROFFSETS.E_SHENTSIZE[0]:
                                                        constants.ELF32HEADEROFFSETS.E_SHENTSIZE[1]])[0]
         elif ei_class == 2:
-            sh_off = unpack(f"{self.endian}Q", elfheader["e_shoff"])[0]
-            shentsize = unpack(f"{self.endian}H", data[constants.ELF64HEADEROFFSETS.E_SHENTSIZE[0]:
+            sh_off = struct.unpack(f"{self.endian}Q", elfheader["e_shoff"])[0]
+            shentsize = struct.unpack(f"{self.endian}H", data[constants.ELF64HEADEROFFSETS.E_SHENTSIZE[0]:
                                                        constants.ELF64HEADEROFFSETS.E_SHENTSIZE[1]])[0]
         else:
             raise exceptions.ELFSectionHeaderTableError(f"Invalid EI_CLASS: {ei_class}")
@@ -443,7 +448,7 @@ class ELFSectionHeaderTable:
         # determine sh_off and sh_num fields and update the ELF header
         # entry
         if new_header:
-            shentsize = unpack(f"{self.endian}H", elfheader["e_shentsize"])[0]
+            shentsize = struct.unpack(f"{self.endian}H", elfheader["e_shentsize"])[0]
             sh_num, sh_off = self.find_section_header_table(data, shentsize,
                                                             ei_class)
             shstrndx = self.find_section_name_string_table(data, sh_num, sh_off,
@@ -451,23 +456,23 @@ class ELFSectionHeaderTable:
 
         if ei_class == 1:
             elfheader["e_shnum"], elfheader["e_shoff"], elfheader["e_shstrndx"] = \
-                pack(f"{self.endian}H", sh_num), pack(f"{self.endian}I", sh_off), pack(f"{self.endian}H", shstrndx)
+                struct.pack(f"{self.endian}H", sh_num), struct.pack(f"{self.endian}I", sh_off), struct.pack(f"{self.endian}H", shstrndx)
         else:
             elfheader["e_shnum"], elfheader["e_shoff"], elfheader["e_shstrndx"] = \
-                pack(f"{self.endian}H", sh_num), pack(f"{self.endian}Q", sh_off), pack(f"{self.endian}H", shstrndx)
+                struct.pack(f"{self.endian}H", sh_num), struct.pack(f"{self.endian}Q", sh_off), struct.pack(f"{self.endian}H", shstrndx)
 
         for shdr_num in range(sh_num):
             if ei_class == 1:
                 try:
                     shdr = self._build_shdr(data, structures.ELF32SECTIONHEADER,
                                             sh_off, shdr_num, shentsize)
-                except error:
+                except struct.error:
                     continue
             else:
                 try:
                     shdr = self._build_shdr(data, structures.ELF64SECTIONHEADER,
                                             sh_off, shdr_num, shentsize)
-                except error:
+                except struct.error:
                     continue
 
             shdr_table.append(shdr)
