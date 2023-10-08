@@ -43,6 +43,7 @@ class ELFFile:
                                  )
         except ELFProgramHeaderTableError as err:
             LOG.error(f"Program header table error: {err}")
+            self.elfprogheader = None
             return
 
         try:
@@ -54,12 +55,16 @@ class ELFFile:
                                     )
         except ELFSectionHeaderTableError as err:
             LOG.error(f"Section header table error: {err}")
+            self.elfsectionheader = None
             return
 
     def reconstruct_file(self):
         """
         This function reconstructs the ELF file with Lepton-constructed headers
         and non-header content directly from the input file.
+
+        :return: Reconstructed ELF file or None if reconstruction was not possible
+        :rtype: bytes or None
         """
         # Initial new file with ELF header contents
         new_data = self.elfheader.to_bytes()
@@ -74,7 +79,11 @@ class ELFFile:
             new_data += self.data[len(new_data): len(new_data) + gap]
 
         # Add program headers table to new file
-        new_data += self.elfprogheader.to_bytes()
+        if self.elfprogheader:
+            new_data += self.elfprogheader.to_bytes()
+        else:
+            LOG.error("No ELF program header. Reconstruction not possible")
+            return None
 
         # Add any bytes between bytes add so far and section headers table
         e_shoff = self.elfheader.fields["e_shoff"]
@@ -83,7 +92,10 @@ class ELFFile:
             new_data += self.data[len(new_data): len(new_data) + gap]
 
         # Add section headers table to new file
-        new_data += self.elfsectionheader.to_bytes()
+        if self.elfsectionheader:
+            new_data += self.elfsectionheader.to_bytes()
+        else:
+            LOG.error("No ELF section header")
 
         # Add rest of the data
         gap = len(self.data) - len(new_data)

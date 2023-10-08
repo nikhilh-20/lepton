@@ -8,7 +8,7 @@ def readme():
 
 setup(
     name="elflepton",
-    version="2.0.3",
+    version="2.0.4",
     license="MIT",
     description="Parse an ELF binary with corrupted ELF headers.",
     long_description=readme(),
