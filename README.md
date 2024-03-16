@@ -83,7 +83,7 @@ readelf: Error: Reading 4194240 bytes extends past end of file for section heade
 These values can be fixed using `elflepton` such that all the above tools can successfully load and parse the binary. The following code snippet does the trick. Note the usage of `new_header=True`. This is required to reconstruct the ELF header and section headers table. Without `new_header=True`, headers are basically cloned.
 
 ```python
-from elflepton.lepton import ELFFile
+from lepton.lepton import ELFFile
 
 sample_path = "test_binaries/keygenme"
 
